@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scrolls of the Pharaoh</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap");
+
+      #particle-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Playfair Display", serif;
+        background-color: #f6e7c1;
+        color: #3a2e1a;
+        padding: 20px;
+        overflow-x: hidden;
+      }
+
+      header {
+        text-align: center;
+        border-bottom: 4px solid #c4a76a;
+        margin-bottom: 30px;
+        padding-bottom: 10px;
+        background: linear-gradient(to bottom, #f9e3b7, #f4d88a);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      header h1 {
+        font-size: 3.5rem;
+        margin: 0;
+        letter-spacing: 2px;
+        color: #7a5a31;
+      }
+
+      .date {
+        font-size: 1rem;
+        color: #5b4b2e;
+        font-style: italic;
+      }
+
+      .container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 25px;
+      }
+
+      .article {
+        background: #fff9e6;
+        padding: 20px;
+        border: 2px solid #c7a567;
+        border-radius: 12px;
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.1);
+        transition: 0.3s ease-in-out;
+      }
+
+      .article:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .article h2 {
+        color: #8a672f;
+      }
+
+      .ad-box {
+        font-style: italic;
+        border: 2px dashed #b8945b;
+        padding: 10px;
+        background: #fff4ce;
+        margin-top: 10px;
+        border-radius: 8px;
+      }
+
+      .hidden-text {
+        color: #fff9e6;
+        background-color: #fff9e6;
+        border-bottom: 1px dotted #aaa;
+        cursor: pointer;
+      }
+
+      .hidden-text:hover {
+        color: #3a2e1a;
+        background-color: transparent;
+      }
+
+      .cipher {
+        font-family: monospace;
+        background: #f7ebc6;
+        padding: 3px 6px;
+        border: 1px dashed #bfa66a;
+      }
+
+      input[type="text"] {
+        margin-top: 8px;
+        padding: 8px;
+        width: 100%;
+        border: 1px solid #b79b6f;
+        border-radius: 5px;
+        background: #fffdf4;
+        font-size: 1rem;
+      }
+
+      #section2,
+      #section3,
+      #final-key-container {
+        display: none;
+        margin-top: 20px;
+      }
+
+      #feedback,
+      #binary-feedback,
+      #section1-feedback {
+        font-weight: bold;
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="particle-canvas"></canvas>
+
+    <header>
+      <h1>Scrolls of the Pharaoh</h1>
+      <div class="date">Mystery Chronicle</div>
+    </header>
+
+    <div class="container">
+      <!-- Section 1 -->
+      <div class="article">
+        <h2>Secrets of the Nile</h2>
+        <p>
+          Ancient waters murmur:
+          <span class="hidden-text" onclick="revealSecret('lights')"
+            >unveil</span
+          >.
+        </p>
+        <div id="lights" style="display: none; margin-top: 10px">
+          <div class="ad-box">
+            "The river speaks not in waves, but in whispers."
+          </div>
+          <p>Ciphered clue:</p>
+          <span class="cipher">Uif Ojmf xijtqfst tfdsfut</span>
+        </div>
+        <p>Enter the decrypted message:</p>
+        <input
+          type="text"
+          id="section1-answer"
+          placeholder="Enter answer here"
+        />
+        <div id="section1-feedback"></div>
+      </div>
+
+      <!-- Section 2 -->
+      <div id="section2">
+        <div class="article">
+          <h2>Monuments of Stone</h2>
+          <div class="ad-box">
+            "With four sides it stands, a tomb and a testament beneath desert
+            stars."
+          </div>
+          <p>Type the sacred word:</p>
+          <input type="text" id="puzzle-input" placeholder="Enter password" />
+          <div id="feedback"></div>
+        </div>
+      </div>
+
+      <!-- Section 3 -->
+      <div id="section3">
+        <div class="article">
+          <h2>Flame Reborn</h2>
+          <div class="ad-box">"From ashes it rises, burning with purpose."</div>
+          <p>Decode the binary:</p>
+          <p>
+            <span class="cipher"
+              >01110000 01101000 01101111 01100101 01101110 01101001
+              01111000</span
+            >
+          </p>
+          <p>Enter decoded word:</p>
+          <input type="text" id="binary-input" placeholder="Enter message" />
+          <div id="binary-feedback"></div>
+        </div>
+      </div>
+
+      <!-- Final QR Code -->
+      <div id="final-key-container">
+        <div class="article">
+          <h2>Final Treasure Clue</h2>
+          <p>Scan the QR Code to reveal your final key:</p>
+          <div id="qrcode"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+
+    <!-- Puzzle Logic -->
+    <script>
+      function revealSecret(id) {
+        document.getElementById(id).style.display = "block";
+      }
+
+      // Section 1
+      document
+        .getElementById("section1-answer")
+        .addEventListener("input", function () {
+          const correct = "The Nile whispers secrets";
+          const feedback = document.getElementById("section1-feedback");
+          if (this.value.trim().toLowerCase() === correct.toLowerCase()) {
+            feedback.textContent = "✅ Correct! The ancient river speaks.";
+            feedback.style.color = "green";
+            document.getElementById("section2").style.display = "block";
+          } else {
+            feedback.textContent = "❌ Incorrect. Keep trying.";
+            feedback.style.color = "red";
+          }
+        });
+
+      // Section 2 (Updated answer: pyramid)
+      document
+        .getElementById("puzzle-input")
+        .addEventListener("input", function () {
+          const correct = "pyramid";
+          const feedback = document.getElementById("feedback");
+          if (this.value.trim().toLowerCase() === correct) {
+            feedback.textContent = "✅ The monument acknowledges you.";
+            feedback.style.color = "green";
+            document.getElementById("section3").style.display = "block";
+          } else {
+            feedback.textContent = "❌ Incorrect.";
+            feedback.style.color = "red";
+          }
+        });
+
+      // Section 3
+      document
+        .getElementById("binary-input")
+        .addEventListener("input", function () {
+          const correct = "phoenix";
+          const feedback = document.getElementById("binary-feedback");
+          if (this.value.trim().toLowerCase() === correct) {
+            feedback.textContent = "✅ Decoded! You are worthy.";
+            feedback.style.color = "green";
+            showFinalKey();
+          } else {
+            feedback.textContent = "❌ Not quite right.";
+            feedback.style.color = "red";
+          }
+        });
+
+      // Final QR Code
+      function showFinalKey() {
+        const container = document.getElementById("final-key-container");
+        container.style.display = "block";
+
+        const qrDiv = document.getElementById("qrcode");
+        qrDiv.innerHTML = "";
+
+        QRCode.toCanvas("VICTORY-QUEST-2025", function (err, canvas) {
+          if (err) console.error(err);
+          qrDiv.appendChild(canvas);
+        });
+      }
+    </script>
+
+    <!-- Particle Animation -->
+    <script>
+      const canvas = document.getElementById("particle-canvas");
+      const ctx = canvas.getContext("2d");
+      let particlesArray;
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      window.addEventListener("resize", () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        init();
+      });
+
+      class Particle {
+        constructor() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.size = Math.random() * 2 + 1;
+          this.speedX = Math.random() * 1 - 0.5;
+          this.speedY = Math.random() * 1 - 0.5;
+          this.opacity = Math.random();
+        }
+
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          if (this.x > canvas.width || this.x < 0) this.speedX *= -1;
+          if (this.y > canvas.height || this.y < 0) this.speedY *= -1;
+        }
+
+        draw() {
+          ctx.fillStyle = rgba(255, 255, 255, { this: opacity });
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function init() {
+        particlesArray = [];
+        for (let i = 0; i < 100; i++) {
+          particlesArray.push(new Particle());
+        }
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particlesArray.forEach((p) => {
+          p.update();
+          p.draw();
+        });
+        requestAnimationFrame(animate);
+      }
+
+      init();
+      animate();
+    </script>
+  </body>
+</html>
